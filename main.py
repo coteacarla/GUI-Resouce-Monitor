@@ -4,6 +4,8 @@ import threading
 from datetime import datetime
 from dataclasses import dataclass
 from typing import List
+from collections import deque
+import statistics
 
 
 @dataclass
@@ -22,8 +24,9 @@ class ResourceMonitor:
         self.interval = interval
         self.running = False
         self.max_data_points = max_data_points
-        self.data: List[SystemMetrics] = []
+        self.data: deque = deque(maxlen=max_data_points)
         self._thread = None
+        self._lock = threading.Lock()
         self._last_net_io = psutil.net_io_counters()
 
     def _collect_metrics(self) -> SystemMetrics:
@@ -48,9 +51,8 @@ class ResourceMonitor:
     def _run(self):
         while self.running:
             metric = self._collect_metrics()
-            self.data.append(metric)
-            if len(self.data) > self.max_data_points:
-                self.data.pop(0)
+            with self._lock:
+                self.data.append(metric)
             time.sleep(self.interval)
 
     def start(self):
@@ -65,4 +67,46 @@ class ResourceMonitor:
             self._thread.join()
 
     def get_latest_data(self) -> List[SystemMetrics]:
-        return list(self.data)
+        with self._lock:
+            return list(self.data)
+
+    def get_statistics(self) -> dict:
+        """Get statistics for all metrics"""
+        with self._lock:
+            data = list(self.data)
+        
+        if not data:
+            return {}
+        
+        cpu_values = [d.cpu_percent for d in data]
+        mem_values = [d.memory_percent for d in data]
+        disk_values = [d.disk_percent for d in data]
+        sent_values = [d.net_sent for d in data]
+        recv_values = [d.net_recv for d in data]
+        
+        return {
+            'cpu': {
+                'current': cpu_values[-1],
+                'avg': statistics.mean(cpu_values),
+                'max': max(cpu_values),
+                'min': min(cpu_values),
+            },
+            'memory': {
+                'current': mem_values[-1],
+                'avg': statistics.mean(mem_values),
+                'max': max(mem_values),
+                'min': min(mem_values),
+            },
+            'disk': {
+                'current': disk_values[-1],
+                'avg': statistics.mean(disk_values),
+                'max': max(disk_values),
+                'min': min(disk_values),
+            },
+            'network': {
+                'sent_current': sent_values[-1],
+                'sent_avg': statistics.mean(sent_values),
+                'recv_current': recv_values[-1],
+                'recv_avg': statistics.mean(recv_values),
+            }
+        }
