@@ -1,89 +1,234 @@
 import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib.pyplot as plt
-from main import ResourceMonitor  
+from matplotlib.figure import Figure
+from main import ResourceMonitor
+import threading
 
 
 class ResourceMonitorGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("System Resource Monitor")
-        self.root.geometry("1000x700")
-        self.root.configure(bg="#1e1e1e")
-
-       
-        self.monitor = ResourceMonitor(interval=1)
-        self.monitor.start()
-
-        self.create_gui()
-        self.update_plots()
-
-    def create_gui(self):
-        style = ttk.Style()
-        style.configure("TLabel", background="#1e1e1e", foreground="white", font=("Segoe UI", 10))
-        style.configure("Header.TLabel", font=("Segoe UI", 14, "bold"))
-
-        ttk.Label(self.root, text="System Resource Monitor", style="Header.TLabel").pack(pady=10)
-
-       
-        self.fig, self.axes = plt.subplots(2, 2, figsize=(10, 6), facecolor="#1e1e1e")
-        self.ax_cpu, self.ax_mem, self.ax_disk, self.ax_net = self.axes.flatten()
-        self.fig.tight_layout(pad=3)
-
+        self.root.geometry("1400x900")
+        self.root.configure(bg="#1a1a1a")
         
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
+        self.monitor = ResourceMonitor(interval=1, max_data_points=60)
+        self.monitor.start()
+        self.running = True
+        
+        self._setup_styles()
+        self._build_ui()
+        self._start_updates()
+
+    def _setup_styles(self):
+        style = ttk.Style()
+        style.theme_use('clam')
+        
+        self.colors = {
+            'bg': '#1a1a1a',
+            'fg': '#e0e0e0',
+            'accent': '#00d4ff',
+            'dark': '#262626',
+            'grid': '#404040'
+        }
+        
+        style.configure("TLabel", background=self.colors['bg'], foreground=self.colors['fg'], font=("Arial", 10))
+        style.configure("TLabel", background=self.colors['bg'], foreground=self.colors['fg'], font=("Arial", 11, "bold"))
+        style.configure("Value", font=("Arial", 10), foreground=self.colors['accent'], background=self.colors['bg'])
+        style.configure("TFrame", background=self.colors['bg'])
+
+    def _build_ui(self):
+        self._build_header()
+        self._build_content()
+    
+    def _build_header(self):
+        header = tk.Frame(self.root, bg=self.colors['bg'])
+        header.pack(side=tk.TOP, fill=tk.X, padx=2, pady=5)
+        
+        title = tk.Label(
+            header,
+            text="━━━  System Resource Monitor  ━━━",
+            font=("Arial", 16, "bold"),
+            fg=self.colors['accent'],
+            bg=self.colors['bg']
+        )
+        title.pack(pady=5)
+    
+    def _build_content(self):
+        content = ttk.Frame(self.root)
+        content.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+        
+        self._build_sidebar(content)
+        self._build_graphs(content)
+    
+    def _build_sidebar(self, parent):
+        self.stats_frame = ttk.Frame(parent)
+        self.stats_frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=(0, 5))
+        
+        self.stat_labels = {}
+        self._add_stat_card("CPU", "cpu")
+        self._add_stat_card("Memory", "memory")
+        self._add_stat_card("Disk", "disk")
+        self._add_stat_card("Network", "network")
+
+    def _add_stat_card(self, title, metric_type):
+        card = ttk.Frame(self.stats_frame)
+        card.pack(fill=tk.X, pady=5)
+        
+        card_title = ttk.Label(card, text=f"● {title}")
+        card_title.configure(font=("Arial", 11, "bold"), foreground="#b0b0b0")
+        card_title.pack(anchor=tk.W)
+        
+        self.stat_labels[metric_type] = {}
+        
+        if metric_type == "network":
+            self._add_value_label(card, metric_type, "sent_current", "Sent: -- KB/s")
+            self._add_value_label(card, metric_type, "recv_current", "Recv: -- KB/s")
+            self._add_value_label(card, metric_type, "avg", "Avg Sent: -- KB/s | Recv: -- KB/s")
+        else:
+            self._add_value_label(card, metric_type, "current", "Current: --%")
+            self._add_value_label(card, metric_type, "avg", "Average: --%")
+            self._add_value_label(card, metric_type, "max", "Max: --%")
+            self._add_value_label(card, metric_type, "min", "Min: --%")
+    
+    def _add_value_label(self, parent, metric_type, key, text):
+        label = ttk.Label(parent, text=text)
+        label.configure(font=("Arial", 10), foreground=self.colors['accent'])
+        label.pack(anchor=tk.W, padx=(10, 0))
+        self.stat_labels[metric_type][key] = label
+    
+    def _build_graphs(self, parent):
+        graph_frame = ttk.Frame(parent)
+        graph_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        
+        self.fig = Figure(figsize=(10, 6), dpi=100, facecolor=self.colors['bg'])
+        self.fig.patch.set_alpha(1.0)
+        
+        self.ax_cpu = self.fig.add_subplot(2, 2, 1)
+        self.ax_mem = self.fig.add_subplot(2, 2, 2)
+        self.ax_disk = self.fig.add_subplot(2, 2, 3)
+        self.ax_net = self.fig.add_subplot(2, 2, 4)
+        
+        for ax in [self.ax_cpu, self.ax_mem, self.ax_disk, self.ax_net]:
+            self._style_axis(ax)
+        
+        self.fig.tight_layout(pad=2)
+        
+        self.canvas = FigureCanvasTkAgg(self.fig, master=graph_frame)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+    
+    def _style_axis(self, ax):
+        ax.set_facecolor(self.colors['dark'])
+        ax.tick_params(colors="#a0a0a0", labelsize=9)
+        ax.spines['bottom'].set_color(self.colors['grid'])
+        ax.spines['left'].set_color(self.colors['grid'])
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.grid(True, alpha=0.2, color=self.colors['grid'], linestyle="--")
 
-    def update_plots(self):
+    def _start_updates(self):
+        self.update_thread = threading.Thread(target=self._update_loop, daemon=True)
+        self.update_thread.start()
+    
+    def _update_loop(self):
+        while self.running:
+            try:
+                self.root.after(0, self._refresh_display)
+            except:
+                pass
+            import time
+            time.sleep(1)
+    
+    def _refresh_display(self):
         data = self.monitor.get_latest_data()
+        stats = self.monitor.get_statistics()
+        
         if not data:
-            self.root.after(1000, self.update_plots)
             return
+        
+        self._update_stats(stats)
+        self._update_graphs(data)
+        
+        try:
+            self.canvas.draw_idle()
+        except:
+            pass
+    
+    def _update_stats(self, stats):
+        if not stats:
+            return
+        
+        if 'cpu' in stats:
+            self._update_metric_labels('cpu', stats['cpu'])
+        if 'memory' in stats:
+            self._update_metric_labels('memory', stats['memory'])
+        if 'disk' in stats:
+            self._update_metric_labels('disk', stats['disk'])
+        if 'network' in stats:
+            self._update_network_labels(stats['network'])
+    
+    def _update_metric_labels(self, metric_type, data):
+        labels = self.stat_labels[metric_type]
+        labels['current'].config(text=f"Current: {data['current']:.1f}%")
+        labels['avg'].config(text=f"Average: {data['avg']:.1f}%")
+        labels['max'].config(text=f"Max: {data['max']:.1f}%")
+        labels['min'].config(text=f"Min: {data['min']:.1f}%")
+    
+    def _update_network_labels(self, data):
+        labels = self.stat_labels['network']
+        labels['sent_current'].config(text=f"Sent: {data['sent_current']:.2f} KB/s")
+        labels['recv_current'].config(text=f"Recv: {data['recv_current']:.2f} KB/s")
+        labels['avg'].config(text=f"Avg Sent: {data['sent_avg']:.2f} | Recv: {data['recv_avg']:.2f} KB/s")
 
-        timestamps = [d.timestamp for d in data]
+    def _update_graphs(self, data):
         cpu = [d.cpu_percent for d in data]
         mem = [d.memory_percent for d in data]
         disk = [d.disk_percent for d in data]
         sent = [d.net_sent for d in data]
         recv = [d.net_recv for d in data]
-
         
+        self._plot_cpu(cpu)
+        self._plot_memory(mem)
+        self._plot_disk(disk)
+        self._plot_network(sent, recv)
+    
+    def _plot_cpu(self, data):
         self.ax_cpu.clear()
-        self.ax_cpu.plot(timestamps, cpu, color="lime")
-        self.ax_cpu.set_title("CPU Usage (%)", color="white")
-        self.ax_cpu.tick_params(colors="white")
+        self.ax_cpu.fill_between(range(len(data)), data, alpha=0.3, color="#00d4ff")
+        self.ax_cpu.plot(range(len(data)), data, color="#00d4ff", linewidth=2, marker='o', markersize=3)
+        self.ax_cpu.set_title("CPU Usage (%)", color="#ffffff", fontsize=12, fontweight="bold")
         self.ax_cpu.set_ylim(0, 100)
-
-       
+        self._style_axis(self.ax_cpu)
+    
+    def _plot_memory(self, data):
         self.ax_mem.clear()
-        self.ax_mem.plot(timestamps, mem, color="deepskyblue")
-        self.ax_mem.set_title("Memory Usage (%)", color="white")
-        self.ax_mem.tick_params(colors="white")
+        self.ax_mem.fill_between(range(len(data)), data, alpha=0.3, color="#00ff88")
+        self.ax_mem.plot(range(len(data)), data, color="#00ff88", linewidth=2, marker='s', markersize=3)
+        self.ax_mem.set_title("Memory Usage (%)", color="#ffffff", fontsize=12, fontweight="bold")
         self.ax_mem.set_ylim(0, 100)
-
-      
+        self._style_axis(self.ax_mem)
+    
+    def _plot_disk(self, data):
         self.ax_disk.clear()
-        self.ax_disk.plot(timestamps, disk, color="orange")
-        self.ax_disk.set_title("Disk Usage (%)", color="white")
-        self.ax_disk.tick_params(colors="white")
+        self.ax_disk.fill_between(range(len(data)), data, alpha=0.3, color="#ffaa00")
+        self.ax_disk.plot(range(len(data)), data, color="#ffaa00", linewidth=2, marker='^', markersize=3)
+        self.ax_disk.set_title("Disk Usage (%)", color="#ffffff", fontsize=12, fontweight="bold")
         self.ax_disk.set_ylim(0, 100)
-
-      
+        self._style_axis(self.ax_disk)
+    
+    def _plot_network(self, sent, recv):
         self.ax_net.clear()
-        self.ax_net.plot(timestamps, sent, color="violet", label="Sent (KB/s)")
-        self.ax_net.plot(timestamps, recv, color="yellow", label="Recv (KB/s)")
-        self.ax_net.set_title("Network (KB/s)", color="white")
-        self.ax_net.legend(facecolor="#1e1e1e", edgecolor="white", labelcolor="white")
-        self.ax_net.tick_params(colors="white")
-
-        self.fig.tight_layout()
-        self.canvas.draw()
-
-       
-        self.root.after(1000, self.update_plots)
+        self.ax_net.plot(range(len(sent)), sent, color="#ff6b6b", linewidth=2, marker='o', markersize=3, label="Sent (KB/s)")
+        self.ax_net.plot(range(len(recv)), recv, color="#b366ff", linewidth=2, marker='s', markersize=3, label="Recv (KB/s)")
+        self.ax_net.fill_between(range(len(sent)), sent, alpha=0.2, color="#ff6b6b")
+        self.ax_net.fill_between(range(len(recv)), recv, alpha=0.2, color="#b366ff")
+        self.ax_net.set_title("Network Usage (KB/s)", color="#ffffff", fontsize=12, fontweight="bold")
+        self.ax_net.legend(facecolor=self.colors['dark'], edgecolor=self.colors['grid'], labelcolor="#ffffff", loc="upper left", fontsize=9)
+        self._style_axis(self.ax_net)
 
     def on_close(self):
+        self.running = False
         self.monitor.stop()
         self.root.destroy()
 
