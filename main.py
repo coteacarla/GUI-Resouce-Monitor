@@ -1,7 +1,7 @@
 import psutil
 import time
 import threading
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass
 from typing import List
 from collections import deque
@@ -40,9 +40,12 @@ class ResourceMonitor:
         sent_diff = net_io.bytes_sent - self._last_net_io.bytes_sent
         recv_diff = net_io.bytes_recv - self._last_net_io.bytes_recv
         self._last_net_io = net_io
+        
+        tz = timezone(timedelta(hours=3))
+        local_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
 
         return SystemMetrics(
-            timestamp=datetime.now().strftime("%H:%M:%S"),
+            timestamp=local_time,
             cpu_percent=cpu,
             memory_percent=mem,
             disk_percent=disk,

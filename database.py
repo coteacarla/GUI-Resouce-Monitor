@@ -1,6 +1,6 @@
 import sqlite3
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 
@@ -36,10 +36,13 @@ class MetricsDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
+        tz = timezone(timedelta(hours=3))
+        timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+        
         cursor.execute('''
-            INSERT INTO metrics (cpu_percent, memory_percent, disk_percent, net_sent, net_recv)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (cpu, memory, disk, net_sent, net_recv))
+            INSERT INTO metrics (timestamp, cpu_percent, memory_percent, disk_percent, net_sent, net_recv)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (timestamp, cpu, memory, disk, net_sent, net_recv))
         
         conn.commit()
         conn.close()
@@ -81,20 +84,22 @@ class MetricsDatabase:
         
         return count
     
-    def delete_old_metrics(self, days=30):
+    def get_metrics_by_date_range(self, start_date, end_date):
         conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
         cursor.execute('''
-            DELETE FROM metrics 
-            WHERE timestamp < datetime('now', '-' || ? || ' days')
-        ''', (days,))
+            SELECT * FROM metrics 
+            WHERE timestamp >= ? AND timestamp < datetime(?, '+1 day')
+            ORDER BY timestamp ASC
+        ''', (start_date, end_date))
         
-        deleted = cursor.rowcount
-        conn.commit()
+        rows = cursor.fetchall()
         conn.close()
         
-        return deleted
+        return [dict(row) for row in rows]
+    
     
     def export_to_csv(self, filename="metrics_export.csv"):
         import csv
