@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import List
 from collections import deque
 import statistics
+from database import MetricsDatabase
 
 
 @dataclass
@@ -28,6 +29,7 @@ class ResourceMonitor:
         self._thread = None
         self._lock = threading.Lock()
         self._last_net_io = psutil.net_io_counters()
+        self.db = MetricsDatabase()
 
     def _collect_metrics(self) -> SystemMetrics:
         cpu = psutil.cpu_percent(interval=None)
@@ -53,6 +55,13 @@ class ResourceMonitor:
             metric = self._collect_metrics()
             with self._lock:
                 self.data.append(metric)
+            self.db.insert_metric(
+                metric.cpu_percent,
+                metric.memory_percent,
+                metric.disk_percent,
+                metric.net_sent,
+                metric.net_recv
+            )
             time.sleep(self.interval)
 
     def start(self):
@@ -71,7 +80,6 @@ class ResourceMonitor:
             return list(self.data)
 
     def get_statistics(self) -> dict:
-        """Get statistics for all metrics"""
         with self._lock:
             data = list(self.data)
         
@@ -110,3 +118,12 @@ class ResourceMonitor:
                 'recv_avg': statistics.mean(recv_values),
             }
         }
+    
+    def get_historical_data(self, minutes=60):
+        return self.db.get_metrics_range(minutes)
+    
+    def export_history(self, filename="metrics_export.csv"):
+        return self.db.export_to_csv(filename)
+    
+    def get_metrics_count(self):
+        return self.db.get_metrics_count()

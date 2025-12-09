@@ -4,6 +4,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from main import ResourceMonitor
 import threading
+from datetime import datetime
 
 
 class ResourceMonitorGUI:
@@ -39,8 +40,21 @@ class ResourceMonitorGUI:
         style.configure("TFrame", background=self.colors['bg'])
 
     def _build_ui(self):
+        self._build_menu()
         self._build_header()
         self._build_content()
+    
+    def _build_menu(self):
+        menubar = tk.Menu(self.root)
+        self.root.config(menu=menubar)
+        
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="Export Metrics", command=self._export_metrics)
+        file_menu.add_command(label="View History (1H)", command=lambda: self._show_history(60))
+        file_menu.add_command(label="View History (24H)", command=lambda: self._show_history(1440))
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=self.on_close)
     
     def _build_header(self):
         header = tk.Frame(self.root, bg=self.colors['bg'])
@@ -231,6 +245,55 @@ class ResourceMonitorGUI:
         self.running = False
         self.monitor.stop()
         self.root.destroy()
+    
+    def get_historical_data(self, minutes=60):
+        return self.monitor.get_historical_data(minutes)
+    
+    def export_metrics(self):
+        filename = f"metrics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        success = self.monitor.export_history(filename)
+        return filename if success else None
+    
+    def _export_metrics(self):
+        try:
+            filename = self.export_metrics()
+            if filename:
+                print(f"Metrics exported to {filename}")
+        except Exception as e:
+            print(f"Export failed: {e}")
+    
+    def _show_history(self, minutes):
+        try:
+            history = self.get_historical_data(minutes)
+            count = len(history)
+            
+            history_window = tk.Toplevel(self.root)
+            history_window.title(f"History ({minutes} minutes) - {count} records")
+            history_window.geometry("600x400")
+            history_window.configure(bg=self.colors['bg'])
+            
+            text_widget = tk.Text(history_window, bg=self.colors['dark'], fg=self.colors['fg'], font=("Courier", 9))
+            text_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+            
+            if not history:
+                text_widget.insert(tk.END, "No historical data available.")
+            else:
+                header = f"{'Timestamp':<20} {'CPU%':>8} {'MEM%':>8} {'DISK%':>8} {'Sent':>10} {'Recv':>10}\n"
+                text_widget.insert(tk.END, header)
+                text_widget.insert(tk.END, "-" * len(header) + "\n")
+                
+                for record in history[-50:]:
+                    line = f"{record['timestamp']:<20} {record['cpu_percent']:>7.1f}% {record['memory_percent']:>7.1f}% {record['disk_percent']:>7.1f}% {record['net_sent']:>9.2f} {record['net_recv']:>9.2f}\n"
+                    text_widget.insert(tk.END, line)
+            
+            text_widget.config(state=tk.DISABLED)
+            
+            scrollbar = ttk.Scrollbar(history_window, command=text_widget.yview)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            text_widget.config(yscrollcommand=scrollbar.set)
+            
+        except Exception as e:
+            print(f"History view failed: {e}")
 
 
 if __name__ == "__main__":
