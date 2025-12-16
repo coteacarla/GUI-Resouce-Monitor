@@ -5,6 +5,7 @@ from matplotlib.figure import Figure
 from main import ResourceMonitor
 import threading
 from datetime import datetime
+from analysis import HistoryAnalysisWindow
 
 
 class ResourceMonitorGUI:
@@ -55,6 +56,10 @@ class ResourceMonitorGUI:
         file_menu.add_command(label="View History (24H)", command=lambda: self._show_history(1440))
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.on_close)
+        
+        analysis_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Analysis", menu=analysis_menu)
+        analysis_menu.add_command(label="Custom Analysis", command=self._open_analysis_window)
     
     def _build_header(self):
         header = tk.Frame(self.root, bg=self.colors['bg'])
@@ -294,6 +299,12 @@ class ResourceMonitorGUI:
             
         except Exception as e:
             print(f"History view failed: {e}")
+    
+    def _open_analysis_window(self):
+        try:
+            HistoryAnalysisWindow(self.root, self.monitor, self.colors)
+        except Exception as e:
+            print(f"Analysis window failed: {e}")
 
 
 if __name__ == "__main__":
