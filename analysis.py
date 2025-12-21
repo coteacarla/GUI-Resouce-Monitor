@@ -394,6 +394,7 @@ class HistoryAnalysisWindow:
         ax.spines['right'].set_visible(False)
         ax.grid(True, alpha=0.2, color=self.colors['grid'], linestyle='--')
 
+
     def _save_plot(self, fig, file_format):
         """
         Save the current plot to a file.
