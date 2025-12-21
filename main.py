@@ -11,6 +11,7 @@ from database import MetricsDatabase
 
 @dataclass
 class SystemMetrics:
+    """Data class representing a snapshot of system metrics at a point in time."""
     timestamp: str
     cpu_percent: float
     memory_percent: float
@@ -20,8 +21,18 @@ class SystemMetrics:
 
 
 class ResourceMonitor:
+    """Monitor and track system resource usage with database storage and statistics."""
+    
+   
     
     def __init__(self, interval: float = 1.0, max_data_points: int = 60):
+        """
+        Initialize the Resource Monitor.
+        
+        Args:
+            interval: Collection interval in seconds (default: 1.0)
+            max_data_points: Maximum data points to keep in memory (default: 60)
+        """
         self.interval = interval
         self.running = False
         self.max_data_points = max_data_points
@@ -32,6 +43,15 @@ class ResourceMonitor:
         self.db = MetricsDatabase()
 
     def _collect_metrics(self) -> SystemMetrics:
+        """
+        Collect current system metrics.
+        
+        Gathers CPU, memory, disk, and network usage data.
+        Calculates network delta since last collection.
+        
+        Returns:
+            SystemMetrics object with current system metrics
+        """
         cpu = psutil.cpu_percent(interval=None)
         mem = psutil.virtual_memory().percent
         disk = psutil.disk_usage('/').percent
@@ -50,10 +70,16 @@ class ResourceMonitor:
             memory_percent=mem,
             disk_percent=disk,
             net_sent=sent_diff / 1024,  
-            net_recv=recv_diff / 1024,  
+            net_recv=recv_diff / 1024,
         )
 
     def _run(self):
+        """
+        Main monitoring loop.
+        
+        Continuously collects metrics, stores in memory and database,
+        and sleeps for the configured interval.
+        """
         while self.running:
             metric = self._collect_metrics()
             with self._lock:
@@ -68,21 +94,43 @@ class ResourceMonitor:
             time.sleep(self.interval)
 
     def start(self):
+        """
+        Start the monitoring thread.
+        
+        Begins background data collection if not already running.
+        """
         if not self.running:
             self.running = True
             self._thread = threading.Thread(target=self._run, daemon=True)
             self._thread.start()
-
+    
     def stop(self):
+        """
+        Stop the monitoring thread.
+        
+        Gracefully halts background data collection.
+        """
         self.running = False
         if self._thread:
             self._thread.join()
 
     def get_latest_data(self) -> List[SystemMetrics]:
+        """
+        Get the latest collected metrics.
+        
+        Returns:
+            List of recent SystemMetrics objects (up to max_data_points)
+        """
         with self._lock:
             return list(self.data)
-
+    
     def get_statistics(self) -> dict:
+        """
+        Calculate statistics for collected metrics.
+        
+        Returns:
+            Dictionary with per-resource statistics (current, avg, max, min)
+        """
         with self._lock:
             data = list(self.data)
         
@@ -121,12 +169,36 @@ class ResourceMonitor:
                 'recv_avg': statistics.mean(recv_values),
             }
         }
-    
+
     def get_historical_data(self, minutes=60):
+        """
+        Retrieve historical metrics from database.
+        
+        Args:
+            minutes: Number of minutes of history to retrieve
+            
+        Returns:
+            List of metric records from database
+        """
         return self.db.get_metrics_range(minutes)
     
     def export_history(self, filename="metrics_export.csv"):
+        """
+        Export all metrics to CSV file.
+        
+        Args:
+            filename: Output CSV filename
+            
+        Returns:
+            True if export successful, False otherwise
+        """
         return self.db.export_to_csv(filename)
-    
+
     def get_metrics_count(self):
+        """
+        Get total count of metrics stored in database.
+        
+        Returns:
+            Total number of metric records
+        """
         return self.db.get_metrics_count()

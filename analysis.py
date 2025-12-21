@@ -1,13 +1,25 @@
+import os
 import tkinter as tk
-from tkinter import ttk
+import threading
+from datetime import datetime, timedelta
+from tkinter import ttk, filedialog, messagebox
+
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
-from datetime import datetime, timedelta
-import threading
 
 
 class HistoryAnalysisWindow:
+    """Window for analyzing historical resource monitoring data with plots and visualizations."""
+
     def __init__(self, parent, monitor, colors):
+        """
+        Initialize the History Analysis window.
+        
+        Args:
+            parent: Parent tkinter window
+            monitor: Monitor object with database access
+            colors: Dictionary containing color scheme for UI elements
+        """
         self.parent = parent
         self.monitor = monitor
         self.colors = colors
@@ -24,8 +36,16 @@ class HistoryAnalysisWindow:
         
         self.plot_frame = tk.Frame(self.window, bg=self.colors['dark'])
         self.plot_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-    
+
     def _build_controls(self):
+        """
+        Build the control panel for plot configuration.
+        
+        Creates UI elements for:
+        - Resource selection (CPU, Memory, Disk, Network, All)
+        - Plot button
+        - Date and time range inputs
+        """
         ctrl = tk.Frame(self.window, bg=self.colors['bg'])
         ctrl.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         
@@ -54,8 +74,14 @@ class HistoryAnalysisWindow:
         tk.Label(date_ctrl, text="End Hour:Min:", bg=self.colors['bg'], fg=self.colors['fg']).pack(side=tk.LEFT, padx=5)
         self.end_time_var = tk.StringVar(value='')
         tk.Entry(date_ctrl, textvariable=self.end_time_var, width=8, bg=self.colors['dark'], fg=self.colors['fg']).pack(side=tk.LEFT, padx=5)
-    
+
     def _plot(self):
+        """
+        Handle plot button click event.
+        
+        Validates date inputs and launches plotting in a background thread
+        to prevent UI freezing.
+        """
         if self.plotting:
             return
         
@@ -72,6 +98,17 @@ class HistoryAnalysisWindow:
         thread.start()
     
     def _plot_thread(self, resource, start_date, end_date):
+        """
+        Background thread for generating plot data.
+        
+        Retrieves metrics from database and generates appropriate plot
+        based on selected resource type. Updates UI on main thread.
+        
+        Args:
+            resource: Type of resource to plot ('cpu', 'memory', 'disk', 'network', 'all')
+            start_date: Start date in 'YYYY-MM-DD' format
+            end_date: End date in 'YYYY-MM-DD' format
+        """
         try:
             history = self.monitor.db.get_metrics_by_date_range(start_date, end_date)
             
@@ -99,6 +136,15 @@ class HistoryAnalysisWindow:
             self.plotting = False
     
     def _filter_by_time(self, history):
+        """
+        Filter historical data by time range.
+        
+        Args:
+            history: List of metric records with timestamps
+            
+        Returns:
+            Filtered list of records within specified hour:minute range
+        """
         start_time = self.start_time_var.get().strip()
         end_time = self.end_time_var.get().strip()
         
@@ -120,20 +166,48 @@ class HistoryAnalysisWindow:
                 filtered.append(record)
         
         return filtered
-    
+
     def _display_plot(self, fig):
+        """
+        Display matplotlib figure in the window with toolbar.
+        
+        Creates or updates canvas, toolbar, and save buttons.
+        Cleans up previous plot if it exists.
+        
+        Args:
+            fig: Matplotlib Figure object to display
+        """
         if self.canvas:
             self.canvas.get_tk_widget().destroy()
-        if hasattr(self, 'toolbar') and self.toolbar:
-            self.toolbar.destroy()
+        if hasattr(self, 'toolbar_frame') and self.toolbar_frame:
+            self.toolbar_frame.destroy()
+        
+       
+        self.toolbar_frame = tk.Frame(self.plot_frame, bg=self.colors['dark'])
+        self.toolbar_frame.pack(side=tk.TOP, fill=tk.X)
         
         self.canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
-        self.toolbar = NavigationToolbar2Tk(self.canvas, self.plot_frame)
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self.toolbar_frame)
         self.toolbar.update()
+        
+        button_frame = tk.Frame(self.toolbar_frame, bg=self.colors['dark'])
+        button_frame.pack(side=tk.LEFT, padx=5)
+        
+        tk.Button(button_frame, text="Save JPEG", command=lambda: self._save_plot(fig, 'jpeg'),
+                  bg=self.colors['accent'], fg=self.colors['bg'], padx=5).pack(side=tk.LEFT, padx=2)
+        tk.Button(button_frame, text="Save PDF", command=lambda: self._save_plot(fig, 'pdf'),
+                  bg=self.colors['accent'], fg=self.colors['bg'], padx=5).pack(side=tk.LEFT, padx=2)
+        
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
         self.canvas.draw()
     
     def _show_message(self, message):
+        """
+        Display a message in the plot area.
+        
+        Args:
+            message: Text message to display
+        """
         if self.canvas:
             self.canvas.get_tk_widget().destroy()
         
@@ -148,6 +222,18 @@ class HistoryAnalysisWindow:
         self.canvas.draw()
     
     def _plot_single(self, history, resource, start_date, end_date):
+        """
+        Generate plot for a single resource type.
+        
+        Args:
+            history: List of metric records
+            resource: Resource type ('cpu', 'memory', 'disk', or 'network')
+            start_date: Start date in 'YYYY-MM-DD' format
+            end_date: End date in 'YYYY-MM-DD' format
+            
+        Returns:
+            Matplotlib Figure object
+        """
         fig = Figure(figsize=(9, 6), dpi=100, facecolor=self.colors['bg'])
         ax = fig.add_subplot(111)
         ax.set_facecolor(self.colors['dark'])
@@ -205,6 +291,19 @@ class HistoryAnalysisWindow:
         return fig
     
     def _plot_all(self, history, start_date, end_date):
+        """
+        Generate plot with all resource types in subplots.
+        
+        Creates a 4-subplot figure with CPU, Memory, Disk, and Network data.
+        
+        Args:
+            history: List of metric records
+            start_date: Start date in 'YYYY-MM-DD' format
+            end_date: End date in 'YYYY-MM-DD' format
+            
+        Returns:
+            Matplotlib Figure object with 4 subplots
+        """
         fig = Figure(figsize=(9, 8), dpi=100, facecolor=self.colors['bg'])
         
         timestamps = [datetime.strptime(r['timestamp'], '%Y-%m-%d %H:%M:%S') for r in history]
@@ -261,7 +360,16 @@ class HistoryAnalysisWindow:
         
         return fig
     
+   
+    
     def _style_axis(self, ax, label):
+        """
+        Apply styling to a single plot axis.
+        
+        Args:
+            ax: Matplotlib axis object
+            label: Title/label for the axis
+        """
         ax.set_title(label, color='#ffffff', fontsize=12, fontweight='bold')
         ax.tick_params(colors='#a0a0a0', labelsize=9)
         ax.spines['bottom'].set_color(self.colors['grid'])
@@ -271,9 +379,48 @@ class HistoryAnalysisWindow:
         ax.grid(True, alpha=0.2, color=self.colors['grid'], linestyle='--')
     
     def _style_axis_compact(self, ax):
+        """
+        Apply compact styling to subplot axes.
+        
+        Used for multi-plot figures with limited space.
+        
+        Args:
+            ax: Matplotlib axis object
+        """
         ax.tick_params(colors='#a0a0a0', labelsize=8)
         ax.spines['bottom'].set_color(self.colors['grid'])
         ax.spines['left'].set_color(self.colors['grid'])
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.grid(True, alpha=0.2, color=self.colors['grid'], linestyle='--')
+
+    def _save_plot(self, fig, file_format):
+        """
+        Save the current plot to a file.
+        
+        Generates filename with timestamp and opens save dialog.
+        Supports JPEG and PDF formats.
+        
+        Args:
+            fig: Matplotlib Figure object to save
+            file_format: Format string ('jpeg' or 'pdf')
+        """
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        start_date = self.start_date_var.get()
+        end_date = self.end_date_var.get()
+        resource = self.resource_var.get()
+        
+        filename = f"plot_{resource}_{start_date}_{end_date}_{timestamp}.{file_format}"
+        
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=f".{file_format}",
+            filetypes=[(file_format.upper(), f"*.{file_format}")],
+            initialfile=filename
+        )
+        
+        if file_path:
+            try:
+                fig.savefig(file_path, format=file_format, dpi=150, bbox_inches='tight')
+                messagebox.showinfo("Success", f"Plot saved successfully as {os.path.basename(file_path)}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save plot: {e}")
