@@ -156,7 +156,20 @@ class HistoryAnalysisWindow:
         start_dt = datetime.strptime(start_date, '%Y-%m-%d')
         end_dt = datetime.strptime(end_date, '%Y-%m-%d')
         
-        x_positions = [(ts - start_dt).total_seconds() / 3600 for ts in timestamps]
+        start_time = self.start_time_var.get().strip()
+        end_time = self.end_time_var.get().strip()
+        
+        if not start_time and not end_time:
+            x_positions = [(ts - start_dt).total_seconds() / 3600 for ts in timestamps]
+            total_hours = (end_dt - start_dt).total_seconds() / 3600 + 24
+        else:
+            start_hour, start_min = map(int, start_time.split(':'))
+            start_dt_with_time = start_dt.replace(hour=start_hour, minute=start_min)
+            x_positions = [(ts - start_dt_with_time).total_seconds() / 3600 for ts in timestamps]
+            if x_positions:
+                total_hours = max(x_positions)
+            else:
+                total_hours = 1
         
         if resource == 'cpu':
             values = [r['cpu_percent'] for r in history]
@@ -185,6 +198,7 @@ class HistoryAnalysisWindow:
             ax.plot(x_positions, values, color=color, linewidth=2)
             ax.fill_between(x_positions, values, alpha=0.2, color=color)
         
+        ax.set_xlim(0, total_hours)
         ax.set_xlabel('Time (hours)', color='#a0a0a0', fontsize=10)
         self._style_axis(ax, label)
         
@@ -195,7 +209,22 @@ class HistoryAnalysisWindow:
         
         timestamps = [datetime.strptime(r['timestamp'], '%Y-%m-%d %H:%M:%S') for r in history]
         start_dt = datetime.strptime(start_date, '%Y-%m-%d')
-        x_positions = [(ts - start_dt).total_seconds() / 3600 for ts in timestamps]
+        end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+        
+        start_time = self.start_time_var.get().strip()
+        end_time = self.end_time_var.get().strip()
+        
+        if not start_time and not end_time:
+            x_positions = [(ts - start_dt).total_seconds() / 3600 for ts in timestamps]
+            total_hours = (end_dt - start_dt).total_seconds() / 3600 + 24
+        else: 
+            start_hour, start_min = map(int, start_time.split(':'))
+            start_dt_with_time = start_dt.replace(hour=start_hour, minute=start_min)
+            x_positions = [(ts - start_dt_with_time).total_seconds() / 3600 for ts in timestamps]
+            if x_positions:
+                total_hours = max(x_positions)
+            else:
+                total_hours = 1
         
         resources = [
             ('cpu', 'CPU (%)', '#00d4ff', [r['cpu_percent'] for r in history]),
@@ -210,6 +239,7 @@ class HistoryAnalysisWindow:
             ax.fill_between(x_positions, values, alpha=0.2, color=color)
             ax.set_title(label, color='#ffffff', fontsize=10, fontweight='bold')
             ax.set_ylim(0, 100)
+            ax.set_xlim(0, total_hours)
             self._style_axis_compact(ax)
             ax.set_xticks([])
         
@@ -223,6 +253,7 @@ class HistoryAnalysisWindow:
         ax.fill_between(x_positions, recv, alpha=0.2, color='#b366ff')
         ax.set_title('Network (KB/s)', color='#ffffff', fontsize=10, fontweight='bold')
         ax.set_xlabel('Time (hours)', color='#a0a0a0', fontsize=9)
+        ax.set_xlim(0, total_hours)
         self._style_axis_compact(ax)
         ax.legend(loc='upper left', fontsize=8)
         
