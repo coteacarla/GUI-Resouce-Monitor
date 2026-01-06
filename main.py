@@ -1,12 +1,24 @@
 import psutil
 import time
 import threading
+import logging
 from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass
 from typing import List
 from collections import deque
 import statistics
 from database import MetricsDatabase
+
+# Configure logging to file
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('resource_monitor.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -50,28 +62,32 @@ class ResourceMonitor:
         Calculates network delta since last collection.
         
         Returns:
-            SystemMetrics object with current system metrics
+            SystemMetrics object with current system metrics or None on error
         """
-        cpu = psutil.cpu_percent(interval=None)
-        mem = psutil.virtual_memory().percent
-        disk = psutil.disk_usage('/').percent
-        net_io = psutil.net_io_counters()
+        try:
+            cpu = psutil.cpu_percent(interval=None)
+            mem = psutil.virtual_memory().percent
+            disk = psutil.disk_usage('/').percent
+            net_io = psutil.net_io_counters()
 
-        sent_diff = net_io.bytes_sent - self._last_net_io.bytes_sent
-        recv_diff = net_io.bytes_recv - self._last_net_io.bytes_recv
-        self._last_net_io = net_io
-        
-        tz = timezone(timedelta(hours=3))
-        local_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+            sent_diff = net_io.bytes_sent - self._last_net_io.bytes_sent
+            recv_diff = net_io.bytes_recv - self._last_net_io.bytes_recv
+            self._last_net_io = net_io
+            
+            tz = timezone(timedelta(hours=3))
+            local_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
 
-        return SystemMetrics(
-            timestamp=local_time,
-            cpu_percent=cpu,
-            memory_percent=mem,
-            disk_percent=disk,
-            net_sent=sent_diff / 1024,  
-            net_recv=recv_diff / 1024,
-        )
+            return SystemMetrics(
+                timestamp=local_time,
+                cpu_percent=cpu,
+                memory_percent=mem,
+                disk_percent=disk,
+                net_sent=sent_diff / 1024,  
+                net_recv=recv_diff / 1024,
+            )
+        except Exception as e:
+            logger.error(f"Error collecting metrics: {e}", exc_info=True)
+            return None
 
     def _run(self):
         """
@@ -81,17 +97,30 @@ class ResourceMonitor:
         and sleeps for the configured interval.
         """
         while self.running:
-            metric = self._collect_metrics()
-            with self._lock:
-                self.data.append(metric)
-            self.db.insert_metric(
-                metric.cpu_percent,
-                metric.memory_percent,
-                metric.disk_percent,
-                metric.net_sent,
-                metric.net_recv
-            )
-            time.sleep(self.interval)
+            try:
+                metric = self._collect_metrics()
+                if metric is None:
+                    time.sleep(self.interval)
+                    continue
+                
+                with self._lock:
+                    self.data.append(metric)
+                
+                try:
+                    self.db.insert_metric(
+                        metric.cpu_percent,
+                        metric.memory_percent,
+                        metric.disk_percent,
+                        metric.net_sent,
+                        metric.net_recv
+                    )
+                except Exception as e:
+                    logger.warning(f"Database insert failed: {e}")
+                
+                time.sleep(self.interval)
+            except Exception as e:
+                logger.error(f"Error in monitoring loop: {e}", exc_info=True)
+                time.sleep(self.interval)
 
     def start(self):
         """
@@ -131,44 +160,48 @@ class ResourceMonitor:
         Returns:
             Dictionary with per-resource statistics (current, avg, max, min)
         """
-        with self._lock:
-            data = list(self.data)
-        
-        if not data:
-            return {}
-        
-        cpu_values = [d.cpu_percent for d in data]
-        mem_values = [d.memory_percent for d in data]
-        disk_values = [d.disk_percent for d in data]
-        sent_values = [d.net_sent for d in data]
-        recv_values = [d.net_recv for d in data]
-        
-        return {
-            'cpu': {
-                'current': cpu_values[-1],
-                'avg': statistics.mean(cpu_values),
-                'max': max(cpu_values),
-                'min': min(cpu_values),
-            },
-            'memory': {
-                'current': mem_values[-1],
-                'avg': statistics.mean(mem_values),
-                'max': max(mem_values),
-                'min': min(mem_values),
-            },
-            'disk': {
-                'current': disk_values[-1],
-                'avg': statistics.mean(disk_values),
-                'max': max(disk_values),
-                'min': min(disk_values),
-            },
-            'network': {
-                'sent_current': sent_values[-1],
-                'sent_avg': statistics.mean(sent_values),
-                'recv_current': recv_values[-1],
-                'recv_avg': statistics.mean(recv_values),
+        try:
+            with self._lock:
+                data = list(self.data)
+            
+            if not data:
+                return {}
+            
+            cpu_values = [d.cpu_percent for d in data]
+            mem_values = [d.memory_percent for d in data]
+            disk_values = [d.disk_percent for d in data]
+            sent_values = [d.net_sent for d in data]
+            recv_values = [d.net_recv for d in data]
+            
+            return {
+                'cpu': {
+                    'current': cpu_values[-1],
+                    'avg': statistics.mean(cpu_values),
+                    'max': max(cpu_values),
+                    'min': min(cpu_values),
+                },
+                'memory': {
+                    'current': mem_values[-1],
+                    'avg': statistics.mean(mem_values),
+                    'max': max(mem_values),
+                    'min': min(mem_values),
+                },
+                'disk': {
+                    'current': disk_values[-1],
+                    'avg': statistics.mean(disk_values),
+                    'max': max(disk_values),
+                    'min': min(disk_values),
+                },
+                'network': {
+                    'sent_current': sent_values[-1],
+                    'sent_avg': statistics.mean(sent_values),
+                    'recv_current': recv_values[-1],
+                    'recv_avg': statistics.mean(recv_values),
+                }
             }
-        }
+        except Exception as e:
+            logger.error(f"Error calculating statistics: {e}", exc_info=True)
+            return {}
 
     def get_historical_data(self, minutes=60):
         """
@@ -182,18 +215,6 @@ class ResourceMonitor:
         """
         return self.db.get_metrics_range(minutes)
     
-    def export_history(self, filename="metrics_export.csv"):
-        """
-        Export all metrics to CSV file.
-        
-        Args:
-            filename: Output CSV filename
-            
-        Returns:
-            True if export successful, False otherwise
-        """
-        return self.db.export_to_csv(filename)
-
     def get_metrics_count(self):
         """
         Get total count of metrics stored in database.

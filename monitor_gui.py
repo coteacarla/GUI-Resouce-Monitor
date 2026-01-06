@@ -1,6 +1,7 @@
 import tkinter as tk
 import threading
 import time
+import logging
 from datetime import datetime
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -8,6 +9,8 @@ from matplotlib.figure import Figure
 
 from main import ResourceMonitor
 from analysis import HistoryAnalysisWindow
+
+logger = logging.getLogger(__name__)
 
 
 class ResourceMonitorGUI:
@@ -228,8 +231,8 @@ class ResourceMonitorGUI:
         while self.running:
             try:
                 self.root.after(0, self._refresh_display)
-            except:
-                pass
+            except Exception as e:
+                logger.debug(f"Update loop error: {e}")
             time.sleep(1)
     
     def _refresh_display(self):
@@ -238,19 +241,22 @@ class ResourceMonitorGUI:
         
         Updates statistics labels and redraws graphs.
         """
-        data = self.monitor.get_latest_data()
-        stats = self.monitor.get_statistics()
-        
-        if not data:
-            return
-        
-        self._update_stats(stats)
-        self._update_graphs(data)
-        
         try:
-            self.canvas.draw_idle()
-        except:
-            pass
+            data = self.monitor.get_latest_data()
+            stats = self.monitor.get_statistics()
+            
+            if not data:
+                return
+            
+            self._update_stats(stats)
+            self._update_graphs(data)
+            
+            try:
+                self.canvas.draw_idle()
+            except Exception as e:
+                logger.debug(f"Canvas draw error: {e}")
+        except Exception as e:
+            logger.error(f"Display refresh error: {e}", exc_info=True)
     
     def _update_stats(self, stats):
         """
@@ -259,17 +265,20 @@ class ResourceMonitorGUI:
         Args:
             stats: Dictionary of statistics from monitor
         """
-        if not stats:
-            return
-        
-        if 'cpu' in stats:
-            self._update_metric_labels('cpu', stats['cpu'])
-        if 'memory' in stats:
-            self._update_metric_labels('memory', stats['memory'])
-        if 'disk' in stats:
-            self._update_metric_labels('disk', stats['disk'])
-        if 'network' in stats:
-            self._update_network_labels(stats['network'])
+        try:
+            if not stats:
+                return
+            
+            if 'cpu' in stats:
+                self._update_metric_labels('cpu', stats['cpu'])
+            if 'memory' in stats:
+                self._update_metric_labels('memory', stats['memory'])
+            if 'disk' in stats:
+                self._update_metric_labels('disk', stats['disk'])
+            if 'network' in stats:
+                self._update_network_labels(stats['network'])
+        except Exception as e:
+            logger.debug(f"Stats update error: {e}")
     
     def _update_metric_labels(self, metric_type, data):
         """
@@ -433,7 +442,7 @@ class ResourceMonitorGUI:
             text_widget.config(yscrollcommand=scrollbar.set)
             
         except Exception as e:
-            print(f"History view failed: {e}")
+            logger.error(f"History view failed: {e}", exc_info=True)
     
     def _open_analysis_window(self):
         """

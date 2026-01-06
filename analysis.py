@@ -1,11 +1,14 @@
 import os
 import tkinter as tk
 import threading
+import logging
 from datetime import datetime, timedelta
 from tkinter import ttk, filedialog, messagebox
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
+
+logger = logging.getLogger(__name__)
 
 
 class HistoryAnalysisWindow:
@@ -132,7 +135,8 @@ class HistoryAnalysisWindow:
             self.window.after(0, self._display_plot, fig)
             self.plotting = False
         except Exception as e:
-            print(f"Error: {e}")
+            logger.error(f"Error plotting data: {e}", exc_info=True)
+            self.window.after(0, self._show_message, f"Error: {str(e)}")
             self.plotting = False
     
     def _filter_by_time(self, history):
