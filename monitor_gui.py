@@ -3,7 +3,7 @@ import threading
 import time
 import logging
 from datetime import datetime
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
@@ -14,27 +14,37 @@ logger = logging.getLogger(__name__)
 
 
 class ResourceMonitorGUI:
-    """Main GUI application for monitoring system resources in real-time."""
+    """Main GUI application for monitoring system resources in real-time.
+    
+    Features:
+    - Real-time resource monitoring with matplotlib graphs
+    - Thread-safe UI updates
+    - Historical data analysis window
+    """
 
     def __init__(self, root):
-        """
-        Initialize the Resource Monitor GUI application.
-        
-        Args:
-            root: Root tkinter window
-        """
-        self.root = root
-        self.root.title("System Resource Monitor")
-        self.root.geometry("1400x900")
-        self.root.configure(bg="#1a1a1a")
-        
-        self.monitor = ResourceMonitor(interval=1, max_data_points=60)
-        self.monitor.start()
-        self.running = True
-        
-        self._setup_styles()
-        self._build_ui()
-        self._start_updates()
+        """Initialize the Resource Monitor GUI application."""
+        try:
+            self.root = root
+            self.root.title("System Resource Monitor")
+            self.root.geometry("1400x900")
+            self.root.configure(bg="#1a1a1a")
+            
+            self.monitor = ResourceMonitor(interval=1, max_data_points=60)
+            self.monitor.start()
+            
+            self.running = True
+            
+            self._setup_styles()
+            self._build_ui()
+            self._start_updates()
+            
+            self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+            
+            logger.info("GUI initialized successfully")
+        except Exception as e:
+            logger.error(f"Error initializing GUI: {e}")
+            raise
 
     def _setup_styles(self):
         """
@@ -42,67 +52,80 @@ class ResourceMonitorGUI:
         
         Sets up dark theme with accent colors for graphs and labels.
         """
-        style = ttk.Style()
-        style.theme_use('clam')
-        
-        self.colors = {
-            'bg': '#1a1a1a',
-            'fg': '#e0e0e0',
-            'accent': '#00d4ff',
-            'dark': '#262626',
-            'grid': '#404040'
-        }
-        
-        style.configure("TLabel", background=self.colors['bg'], foreground=self.colors['fg'], font=("Arial", 10))
-        style.configure("TLabel", background=self.colors['bg'], foreground=self.colors['fg'], font=("Arial", 11, "bold"))
-        style.configure("Value", font=("Arial", 10), foreground=self.colors['accent'], background=self.colors['bg'])
-        style.configure("TFrame", background=self.colors['bg'])
+        try:
+            style = ttk.Style()
+            style.theme_use('clam')
+            
+            self.colors = {
+                'bg': '#1a1a1a',
+                'fg': '#e0e0e0',
+                'accent': '#00d4ff',
+                'dark': '#262626',
+                'grid': '#404040'
+            }
+            
+            style.configure("TLabel", background=self.colors['bg'], foreground=self.colors['fg'], font=("Arial", 10))
+            style.configure("TLabel", background=self.colors['bg'], foreground=self.colors['fg'], font=("Arial", 11, "bold"))
+            style.configure("Value", font=("Arial", 10), foreground=self.colors['accent'], background=self.colors['bg'])
+            style.configure("TFrame", background=self.colors['bg'])
+        except Exception as e:
+            logger.error(f"Error setting up styles: {e}")
+            
     
     def _build_ui(self):
         """
-        Build the complete UI layout.
+        Build the complete UI layout with error handling.
         
         Calls menu, header, and content builders in sequence.
         """
-        self._build_menu()
-        self._build_header()
-        self._build_content()
+        try:
+            self._build_menu()
+            self._build_header()
+            self._build_content()
+            self._build_status_bar()
+        except Exception as e:
+            logger.error(f"Error building UI: {e}")
+            messagebox.showerror("UI Error", "Failed to build interface")
     
     def _build_menu(self):
         """
-        Build the application menu bar.
+        Build the application menu bar with error handling.
         
         Includes File menu (history views, exit) and Analysis menu.
         """
-        menubar = tk.Menu(self.root)
-        self.root.config(menu=menubar)
-        
-        file_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="File", menu=file_menu)
-        file_menu.add_command(label="View History (1H)", command=lambda: self._show_history(60))
-        file_menu.add_command(label="View History (24H)", command=lambda: self._show_history(1440))
-        file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=self.on_close)
-        
-        analysis_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Analysis", menu=analysis_menu)
-        analysis_menu.add_command(label="Custom Analysis", command=self._open_analysis_window)
+        try:
+            menubar = tk.Menu(self.root)
+            self.root.config(menu=menubar)
+            
+            file_menu = tk.Menu(menubar, tearoff=0)
+            menubar.add_cascade(label="File", menu=file_menu)
+            file_menu.add_command(label="View History (1H)", command=lambda: self._show_history(60))
+            file_menu.add_command(label="View History (24H)", command=lambda: self._show_history(1440))
+            file_menu.add_separator()
+            file_menu.add_command(label="Exit", command=self.on_close)
+            
+            analysis_menu = tk.Menu(menubar, tearoff=0)
+            menubar.add_cascade(label="Analysis", menu=analysis_menu)
+            analysis_menu.add_command(label="Custom Analysis", command=self._open_analysis_window)
+        except Exception as e:
+            logger.error(f"Error building menu: {e}")
     
     def _build_header(self):
-        """
-        Build the application header with title.
-        """
-        header = tk.Frame(self.root, bg=self.colors['bg'])
-        header.pack(side=tk.TOP, fill=tk.X, padx=2, pady=5)
-        
-        title = tk.Label(
-            header,
-            text="━━━  System Resource Monitor  ━━━",
-            font=("Arial", 16, "bold"),
-            fg=self.colors['accent'],
-            bg=self.colors['bg']
-        )
-        title.pack(pady=5)
+        """Build the application header with title and error handling."""
+        try:
+            header = tk.Frame(self.root, bg=self.colors['bg'])
+            header.pack(side=tk.TOP, fill=tk.X, padx=2, pady=5)
+            
+            title = tk.Label(
+                header,
+                text="━━━  System Resource Monitor  ━━━",
+                font=("Arial", 16, "bold"),
+                fg=self.colors['accent'],
+                bg=self.colors['bg']
+            )
+            title.pack(pady=5)
+        except Exception as e:
+            logger.error(f"Error building header: {e}")
     
     def _build_content(self):
         """
@@ -217,30 +240,27 @@ class ResourceMonitorGUI:
 
     def _start_updates(self):
         """
-        Start the background update thread for data refresh.
+        Start the background update thread for data refresh with error handling.
         """
-        self.update_thread = threading.Thread(target=self._update_loop, daemon=True)
-        self.update_thread.start()
+        try:
+            self.update_thread = threading.Thread(target=self._update_loop, daemon=True, name="GUIUpdater")
+            self.update_thread.start()
+            logger.info("GUI update thread started")
+        except Exception as e:
+            logger.error(f"Failed to start update thread: {e}")
     
     def _update_loop(self):
-        """
-        Background loop for continuous data updates.
-        
-        Runs on daemon thread and calls refresh_display every second.
-        """
+        """Background loop for continuous data updates."""
         while self.running:
             try:
                 self.root.after(0, self._refresh_display)
             except Exception as e:
-                logger.debug(f"Update loop error: {e}")
+                logger.error(f"Update loop error: {e}")
+            
             time.sleep(1)
     
     def _refresh_display(self):
-        """
-        Refresh all display elements with latest data.
-        
-        Updates statistics labels and redraws graphs.
-        """
+        """Refresh all display elements with latest data."""
         try:
             data = self.monitor.get_latest_data()
             stats = self.monitor.get_statistics()
@@ -250,13 +270,14 @@ class ResourceMonitorGUI:
             
             self._update_stats(stats)
             self._update_graphs(data)
+            self._update_status()
             
             try:
                 self.canvas.draw_idle()
             except Exception as e:
                 logger.debug(f"Canvas draw error: {e}")
         except Exception as e:
-            logger.error(f"Display refresh error: {e}", exc_info=True)
+            logger.error(f"Display refresh error: {e}")
     
     def _update_stats(self, stats):
         """
@@ -383,31 +404,75 @@ class ResourceMonitorGUI:
         self.ax_net.legend(facecolor=self.colors['dark'], edgecolor=self.colors['grid'], labelcolor="#ffffff", loc="upper left", fontsize=9)
         self._style_axis(self.ax_net)
 
+    def _build_status_bar(self):
+        """Build status bar at bottom of window."""
+        self.status_frame = tk.Frame(self.root, bg=self.colors['dark'], height=20)
+        self.status_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        
+        self.status_label = tk.Label(
+            self.status_frame,
+            text="Ready | Data points: 0 | DB: OK",
+            bg=self.colors['dark'],
+            fg=self.colors['fg'],
+            font=("Arial", 9),
+            anchor=tk.W,
+            padx=5,
+            pady=2
+        )
+        self.status_label.pack(fill=tk.X)
+    
+    def _update_status(self):
+        """Update status bar with current info."""
+        try:
+            data_count = len(self.monitor.get_latest_data())
+            db_count = self.monitor.db.get_metrics_count()
+            status_text = f"Ready | Data points: {data_count} | Database records: {db_count}"
+            self.status_label.config(text=status_text)
+        except Exception as e:
+            logger.warning(f"Status update error: {e}")
+
     def on_close(self):
         """
-        Handle application close event.
+        Handle application close event gracefully.
         
         Stops monitoring, closes database connection, and destroys window.
+        Includes error handling for cleanup operations.
         """
-        self.running = False
-        self.monitor.stop()
-        self.root.destroy()
+        try:
+            logger.info("Closing application...")
+            self.running = False
+            
+            try:
+                self.monitor.stop()
+                logger.info("Monitor stopped successfully")
+            except Exception as e:
+                logger.error(f"Error stopping monitor: {e}")
+            
+            self.root.destroy()
+            logger.info("Application closed")
+        except Exception as e:
+            logger.error(f"Error during close: {e}", exc_info=True)
+            self.root.destroy()
 
-    def get_historical_data(self, minutes=60):
+    def get_historical_data(self, minutes: int = 60):
         """
-        Retrieve historical data from database.
+        Retrieve historical data from database with error handling.
         
         Args:
             minutes: Number of minutes of history to retrieve
             
         Returns:
-            List of historical metric records
+            List of historical metric records, empty list on error
         """
-        return self.monitor.get_historical_data(minutes)
+        try:
+            return self.monitor.get_historical_data(minutes)
+        except Exception as e:
+            logger.error(f"Error retrieving historical data: {e}")
+            return []
     
-    def _show_history(self, minutes):
+    def _show_history(self, minutes: int):
         """
-        Display historical data in a new window.
+        Display historical data in a new window with error handling.
         
         Args:
             minutes: Number of minutes of history to display
@@ -415,6 +480,10 @@ class ResourceMonitorGUI:
         try:
             history = self.get_historical_data(minutes)
             count = len(history)
+            
+            if not history:
+                messagebox.showinfo("No Data", f"No historical data available for last {minutes} minutes")
+                return
             
             history_window = tk.Toplevel(self.root)
             history_window.title(f"History ({minutes} minutes) - {count} records")

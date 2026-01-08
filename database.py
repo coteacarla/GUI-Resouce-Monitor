@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import logging
+import threading
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -8,24 +9,26 @@ logger = logging.getLogger(__name__)
 
 
 class MetricsDatabase:
-    """SQLite database for storing and retrieving system metrics with time-based queries."""
+    """SQLite database for storing and retrieving system metrics.
     
-    def __init__(self, db_path="metrics.db"):
-        """
-        Initialize database connection.
+    Features:
+    - Timestamp-based queries with indexed lookups
+    - Thread-safe operations
+    - Automatic schema initialization
+    """
+    
+    def __init__(self, db_path: str = "metrics.db"):
+        """Initialize database connection."""
+        if not db_path or not isinstance(db_path, str):
+            raise ValueError("db_path must be a non-empty string")
         
-        Args:
-            db_path: Path to SQLite database file (default: 'metrics.db')
-        """
         self.db_path = db_path
+        self._lock = threading.Lock()
         self.init_db()
+        logger.info(f"MetricsDatabase initialized at {db_path}")
 
     def init_db(self):
-        """
-        Initialize database schema.
-        
-        Creates metrics table with timestamp index if it doesn't exist.
-        """
+        """Initialize database schema."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -48,38 +51,34 @@ class MetricsDatabase:
             
             conn.commit()
             conn.close()
-        except Exception:
-            pass
+            logger.debug("Database schema initialized successfully")
+        except Exception as e:
+            logger.error(f"Error initializing database schema: {e}")
+            raise
 
-    def insert_metric(self, cpu, memory, disk, net_sent, net_recv):
-        """
-        Insert a new metric record into the database.
-        
-        Args:
-            cpu: CPU usage percentage
-            memory: Memory usage percentage
-            disk: Disk usage percentage
-            net_sent: Network bytes sent since last collection
-            net_recv: Network bytes received since last collection
-        """
+    def insert_metric(self, cpu: float, memory: float, disk: float, net_sent: float, net_recv: float) -> bool:
+        """Insert a new metric record into the database."""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            tz = timezone(timedelta(hours=3))
-            timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
-            
-            cursor.execute('''
-                INSERT INTO metrics (timestamp, cpu_percent, memory_percent, disk_percent, net_sent, net_recv)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (timestamp, cpu, memory, disk, net_sent, net_recv))
-            
-            conn.commit()
-            conn.close()
-        except Exception:
-            pass
+            with self._lock:
+                conn = sqlite3.connect(self.db_path)
+                cursor = conn.cursor()
+                
+                tz = timezone(timedelta(hours=3))
+                timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+                
+                cursor.execute('''
+                    INSERT INTO metrics (timestamp, cpu_percent, memory_percent, disk_percent, net_sent, net_recv)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (timestamp, cpu, memory, disk, net_sent, net_recv))
+                
+                conn.commit()
+                conn.close()
+                return True
+        except Exception as e:
+            logger.error(f"Database insert error: {e}")
+            return False
 
-    def get_metrics_range(self, minutes=60):
+    def get_metrics_range(self, minutes: int = 60) -> list:
         """
         Retrieve metrics from the last N minutes.
         
@@ -87,57 +86,86 @@ class MetricsDatabase:
             minutes: Number of minutes of history to retrieve
             
         Returns:
-            List of metric dictionaries
+            List of metric dictionaries, empty list on error
         """
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+        if minutes < 0:
+            logger.warning("Negative minutes requested, returning empty list")
+            return []
         
-        cursor.execute('''
-            SELECT * FROM metrics 
-            WHERE timestamp >= datetime('now', '-' || ? || ' minutes')
-            ORDER BY timestamp ASC
-        ''', (minutes,))
-        
-        rows = cursor.fetchall()
-        conn.close()
-        
-        return [dict(row) for row in rows]
+        try:
+            with self._lock:
+                conn = sqlite3.connect(self.db_path)
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    SELECT * FROM metrics 
+                    WHERE timestamp >= datetime('now', '-' || ? || ' minutes')
+                    ORDER BY timestamp ASC
+                ''', (minutes,))
+                
+                rows = cursor.fetchall()
+                conn.close()
+                
+                return [dict(row) for row in rows]
+        except sqlite3.Error as e:
+            logger.error(f"Database query error: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Unexpected error during query: {e}", exc_info=True)
+            return []
     
-    def get_all_metrics(self):
+    def get_all_metrics(self) -> list:
         """
         Retrieve all metrics from the database.
         
         Returns:
             List of all metric dictionaries sorted by timestamp
+            Empty list on error
         """
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT * FROM metrics ORDER BY timestamp ASC')
-        rows = cursor.fetchall()
-        conn.close()
-        
-        return [dict(row) for row in rows]
+        try:
+            with self._lock:
+                conn = sqlite3.connect(self.db_path)
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                
+                cursor.execute('SELECT * FROM metrics ORDER BY timestamp ASC')
+                rows = cursor.fetchall()
+                conn.close()
+                
+                return [dict(row) for row in rows]
+        except sqlite3.Error as e:
+            logger.error(f"Database query error: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Unexpected error during retrieval: {e}", exc_info=True)
+            return []
     
-    def get_metrics_count(self):
+    def get_metrics_count(self) -> int:
         """
         Get total number of metrics in database.
         
         Returns:
-            Integer count of metrics
+            Integer count of metrics, 0 on error
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT COUNT(*) FROM metrics')
-        count = cursor.fetchone()[0]
-        conn.close()
-        
-        return count
+        try:
+            with self._lock:
+                conn = sqlite3.connect(self.db_path)
+                cursor = conn.cursor()
+                
+                cursor.execute('SELECT COUNT(*) FROM metrics')
+                count = cursor.fetchone()[0]
+                conn.close()
+                
+                return count
+        except sqlite3.Error as e:
+            logger.error(f"Database query error: {e}")
+            return 0
+        except Exception as e:
+            logger.error(f"Unexpected error getting count: {e}", exc_info=True)
+            return 0
     
-    def get_metrics_by_date_range(self, start_date, end_date):
+    def get_metrics_by_date_range(self, start_date: str, end_date: str) -> list:
         """
         Retrieve metrics within a date range.
         
@@ -147,32 +175,75 @@ class MetricsDatabase:
             
         Returns:
             List of metric dictionaries within the date range
+            Empty list on error or invalid input
         """
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+        for date in [start_date, end_date]:
+            try:
+                datetime.strptime(date, '%Y-%m-%d')
+            except ValueError:
+                logger.error(f"Invalid date format: {date}. Expected YYYY-MM-DD")
+                return []
         
-        cursor.execute('''
-            SELECT * FROM metrics 
-            WHERE timestamp >= ? AND timestamp < datetime(?, '+1 day')
-            ORDER BY timestamp ASC
-        ''', (start_date, end_date))
-        
-        rows = cursor.fetchall()
-        conn.close()
-        
-        return [dict(row) for row in rows]
-    
+        try:
+            with self._lock:
+                conn = sqlite3.connect(self.db_path)
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    SELECT * FROM metrics 
+                    WHERE timestamp >= ? AND timestamp < datetime(?, '+1 day')
+                    ORDER BY timestamp ASC
+                ''', (start_date, end_date))
+                
+                rows = cursor.fetchall()
+                conn.close()
+                
+                return [dict(row) for row in rows]
+        except sqlite3.Error as e:
+            logger.error(f"Database query error: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Unexpected error during date range query: {e}", exc_info=True)
+            return []
 
-    def clear_all(self):
+    def clear_all(self) -> bool:
         """
         Delete all metrics from the database.
         
         Warning: This action cannot be undone.
-        """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
         
-        cursor.execute('DELETE FROM metrics')
-        conn.commit()
-        conn.close()
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            with self._lock:
+                conn = sqlite3.connect(self.db_path)
+                cursor = conn.cursor()
+                
+                cursor.execute('DELETE FROM metrics')
+                conn.commit()
+                conn.close()
+                logger.warning("All metrics cleared from database")
+                return True
+        except sqlite3.Error as e:
+            logger.error(f"Database error during clear: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Unexpected error during clear: {e}", exc_info=True)
+            return False
+    
+    def get_database_size(self) -> int:
+        """
+        Get the size of the database file in bytes.
+        
+        Returns:
+            Size in bytes, 0 if file doesn't exist
+        """
+        try:
+            if os.path.exists(self.db_path):
+                return os.path.getsize(self.db_path)
+            return 0
+        except Exception as e:
+            logger.error(f"Error getting database size: {e}")
+            return 0

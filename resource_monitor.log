@@ -1,0 +1,11 @@
+2026-01-08 09:13:18,762 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-01-08 09:13:18,763 - main - INFO - ResourceMonitor initialized: interval=1s, max_points=60
+2026-01-08 09:13:18,764 - main - INFO - Monitoring loop started
+2026-01-08 09:13:18,764 - main - INFO - ResourceMonitor started
+2026-01-08 09:13:18,924 - __main__ - INFO - GUI update thread started
+2026-01-08 09:13:18,925 - __main__ - INFO - GUI initialized successfully
+2026-01-08 09:15:14,686 - __main__ - INFO - Closing application...
+2026-01-08 09:15:14,687 - main - INFO - Stopping ResourceMonitor...
+2026-01-08 09:15:15,041 - main - INFO - ResourceMonitor stopped
+2026-01-08 09:15:15,044 - __main__ - INFO - Monitor stopped successfully
+2026-01-08 09:15:15,130 - __main__ - INFO - Application closed
