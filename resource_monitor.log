@@ -9,3 +9,199 @@
 2026-01-08 09:15:15,041 - main - INFO - ResourceMonitor stopped
 2026-01-08 09:15:15,044 - __main__ - INFO - Monitor stopped successfully
 2026-01-08 09:15:15,130 - __main__ - INFO - Application closed
+2026-10-12 11:14:25,594 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:25,594 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:14:25,617 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:14:25,618 - main - INFO - Monitoring loop started
+2026-10-12 11:14:25,619 - main - INFO - ResourceMonitor started
+2026-10-12 11:14:25,933 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:14:25,987 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:14:26,002 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:26,002 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:14:26,036 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:14:26,073 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:26,073 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:14:26,101 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:14:26,103 - main - INFO - Monitoring loop started
+2026-10-12 11:14:26,103 - main - INFO - ResourceMonitor started
+2026-10-12 11:14:26,424 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:14:26,490 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:14:26,515 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:26,516 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:14:26,546 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:14:26,548 - main - INFO - Monitoring loop started
+2026-10-12 11:14:26,548 - main - INFO - ResourceMonitor started
+2026-10-12 11:14:27,180 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:14:27,194 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:14:27,218 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:27,218 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:14:27,239 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:14:27,261 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:27,262 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:14:27,286 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:14:27,303 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:27,304 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:14:27,327 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:14:27,330 - main - INFO - Monitoring loop started
+2026-10-12 11:14:27,331 - main - INFO - ResourceMonitor started
+2026-10-12 11:14:27,566 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:14:27,628 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:14:27,645 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:27,646 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:14:27,671 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:14:27,672 - main - INFO - Monitoring loop started
+2026-10-12 11:14:27,673 - main - INFO - ResourceMonitor started
+2026-10-12 11:14:27,896 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:14:27,966 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:14:28,000 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:28,001 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:14:28,029 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:14:28,030 - main - INFO - Monitoring loop started
+2026-10-12 11:14:28,030 - main - INFO - ResourceMonitor started
+2026-10-12 11:14:28,359 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:14:28,427 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:14:28,441 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:28,442 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:14:28,461 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:14:28,474 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:28,474 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:14:28,494 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:14:28,495 - main - INFO - Monitoring loop started
+2026-10-12 11:14:28,496 - main - INFO - ResourceMonitor started
+2026-10-12 11:14:29,125 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:14:29,147 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:14:29,164 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:14:29,237 - database - WARNING - All metrics cleared from database
+2026-10-12 11:14:29,263 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:14:30,980 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:14:31,017 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:14:31,084 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:14:31,256 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:14:31,308 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:14:33,919 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:14:34,134 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:14:34,162 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:14:34,179 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:34,180 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=20
+2026-10-12 11:14:34,198 - main - INFO - Monitoring loop started
+2026-10-12 11:14:34,198 - main - INFO - ResourceMonitor started
+2026-10-12 11:14:34,419 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:14:34,437 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:14:34,583 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:34,584 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=20
+2026-10-12 11:14:34,610 - main - INFO - Monitoring loop started
+2026-10-12 11:14:34,610 - main - INFO - ResourceMonitor started
+2026-10-12 11:14:34,850 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:14:34,877 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:14:34,993 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:34,993 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=20
+2026-10-12 11:14:35,126 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:35,126 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=20
+2026-10-12 11:14:35,143 - main - INFO - Monitoring loop started
+2026-10-12 11:14:35,143 - main - INFO - ResourceMonitor started
+2026-10-12 11:14:35,363 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:14:35,453 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:14:35,569 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:14:35,570 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=20
+2026-10-12 11:14:35,590 - main - INFO - Monitoring loop started
+2026-10-12 11:14:35,591 - main - INFO - ResourceMonitor started
+2026-10-12 11:14:35,820 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:14:35,833 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:15:47,487 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:47,488 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:15:47,516 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:15:47,517 - main - INFO - Monitoring loop started
+2026-10-12 11:15:47,517 - main - INFO - ResourceMonitor started
+2026-10-12 11:15:47,839 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:15:47,891 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:15:47,906 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:47,907 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:15:47,932 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:15:47,977 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:47,978 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:15:48,003 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:15:48,005 - main - INFO - Monitoring loop started
+2026-10-12 11:15:48,006 - main - INFO - ResourceMonitor started
+2026-10-12 11:15:48,330 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:15:48,353 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:15:48,365 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:48,366 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:15:48,388 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:15:48,389 - main - INFO - Monitoring loop started
+2026-10-12 11:15:48,389 - main - INFO - ResourceMonitor started
+2026-10-12 11:15:49,007 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:15:49,015 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:15:49,030 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:49,030 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:15:49,049 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:15:49,060 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:49,060 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:15:49,078 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:15:49,092 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:49,092 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:15:49,109 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:15:49,111 - main - INFO - Monitoring loop started
+2026-10-12 11:15:49,111 - main - INFO - ResourceMonitor started
+2026-10-12 11:15:49,314 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:15:49,337 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:15:49,364 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:49,365 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:15:49,389 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:15:49,389 - main - INFO - Monitoring loop started
+2026-10-12 11:15:49,389 - main - INFO - ResourceMonitor started
+2026-10-12 11:15:49,626 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:15:49,690 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:15:49,707 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:49,708 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:15:49,736 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:15:49,738 - main - INFO - Monitoring loop started
+2026-10-12 11:15:49,739 - main - INFO - ResourceMonitor started
+2026-10-12 11:15:50,064 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:15:50,105 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:15:50,114 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:50,114 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:15:50,131 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:15:50,146 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:50,146 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=10
+2026-10-12 11:15:50,164 - database - INFO - MetricsDatabase initialized at test.db
+2026-10-12 11:15:50,165 - main - INFO - Monitoring loop started
+2026-10-12 11:15:50,165 - main - INFO - ResourceMonitor started
+2026-10-12 11:15:50,783 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:15:50,795 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:15:50,817 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:15:50,927 - database - WARNING - All metrics cleared from database
+2026-10-12 11:15:50,954 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:15:52,548 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:15:52,579 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:15:52,640 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:15:52,819 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:15:52,884 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:15:55,296 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:15:55,456 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:15:55,499 - database - INFO - MetricsDatabase initialized at test_db.db
+2026-10-12 11:15:55,537 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:55,538 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=20
+2026-10-12 11:15:55,555 - main - INFO - Monitoring loop started
+2026-10-12 11:15:55,556 - main - INFO - ResourceMonitor started
+2026-10-12 11:15:55,777 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:15:55,789 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:15:55,935 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:55,936 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=20
+2026-10-12 11:15:55,974 - main - INFO - Monitoring loop started
+2026-10-12 11:15:55,974 - main - INFO - ResourceMonitor started
+2026-10-12 11:15:56,219 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:15:56,250 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:15:56,366 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:56,367 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=20
+2026-10-12 11:15:56,507 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:56,508 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=20
+2026-10-12 11:15:56,533 - main - INFO - Monitoring loop started
+2026-10-12 11:15:56,533 - main - INFO - ResourceMonitor started
+2026-10-12 11:15:56,735 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:15:56,855 - main - INFO - ResourceMonitor stopped
+2026-10-12 11:15:56,980 - database - INFO - MetricsDatabase initialized at metrics.db
+2026-10-12 11:15:56,980 - main - INFO - ResourceMonitor initialized: interval=0.05s, max_points=20
+2026-10-12 11:15:57,012 - main - INFO - Monitoring loop started
+2026-10-12 11:15:57,012 - main - INFO - ResourceMonitor started
+2026-10-12 11:15:57,236 - main - INFO - Stopping ResourceMonitor...
+2026-10-12 11:15:57,237 - main - INFO - ResourceMonitor stopped

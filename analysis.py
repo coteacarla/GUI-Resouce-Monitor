@@ -4,6 +4,7 @@ import threading
 import logging
 from datetime import datetime, timedelta
 from tkinter import ttk, filedialog, messagebox
+from typing import Optional
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
@@ -13,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 class HistoryAnalysisWindow:
     """Window for analyzing historical resource monitoring data with plots and visualizations."""
+
+    toolbar_frame: Optional[tk.Frame]
 
     def __init__(self, parent, monitor, colors):
         """
@@ -28,6 +31,7 @@ class HistoryAnalysisWindow:
         self.colors = colors
         self.canvas = None
         self.toolbar = None
+        self.toolbar_frame = None
         self.plotting = False
         
         self.window = tk.Toplevel(parent)
@@ -183,7 +187,7 @@ class HistoryAnalysisWindow:
         """
         if self.canvas:
             self.canvas.get_tk_widget().destroy()
-        if hasattr(self, 'toolbar_frame') and self.toolbar_frame:
+        if self.toolbar_frame:
             self.toolbar_frame.destroy()
         
        
@@ -260,19 +264,25 @@ class HistoryAnalysisWindow:
                 total_hours = max(x_positions)
             else:
                 total_hours = 1
-        
+
         if resource == 'cpu':
             values = [r['cpu_percent'] for r in history]
-            color, label = '#00d4ff', 'CPU (%)'
+            label = 'CPU (%)'
             ax.set_ylim(0, 100)
+            ax.plot(x_positions, values, color='#00d4ff', linewidth=2)
+            ax.fill_between(x_positions, values, alpha=0.2, color='#00d4ff')
         elif resource == 'memory':
             values = [r['memory_percent'] for r in history]
-            color, label = '#00ff88', 'Memory (%)'
+            label = 'Memory (%)'
             ax.set_ylim(0, 100)
+            ax.plot(x_positions, values, color='#00ff88', linewidth=2)
+            ax.fill_between(x_positions, values, alpha=0.2, color='#00ff88')
         elif resource == 'disk':
             values = [r['disk_percent'] for r in history]
-            color, label = '#ffaa00', 'Disk (%)'
+            label = 'Disk (%)'
             ax.set_ylim(0, 100)
+            ax.plot(x_positions, values, color='#ffaa00', linewidth=2)
+            ax.fill_between(x_positions, values, alpha=0.2, color='#ffaa00')
         else:
             sent = [r['net_sent'] for r in history]
             recv = [r['net_recv'] for r in history]
@@ -282,11 +292,6 @@ class HistoryAnalysisWindow:
             ax.fill_between(x_positions, recv, alpha=0.2, color='#b366ff')
             ax.legend(loc='upper left', fontsize=9)
             label = 'Network (KB/s)'
-            values = None
-        
-        if values:
-            ax.plot(x_positions, values, color=color, linewidth=2)
-            ax.fill_between(x_positions, values, alpha=0.2, color=color)
         
         ax.set_xlim(0, total_hours)
         ax.set_xlabel('Time (hours)', color='#a0a0a0', fontsize=10)
